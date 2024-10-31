@@ -15,31 +15,62 @@ detector = HandDetector(detectionCon=.8, maxHands=2)
 
 keys = [["Q","W","E","R","T","Y","U","I","O","P"],
         ["A","S","D","F","G","H","J","K","L",";"],
-        ["Z","X","C","V","B","N","M",",",".","/", " "]]
+        ["Z","X","C","V","B","N","M",",",".","/"],
+        [" "]]
 finalText = ""
 
 keyboard = Controller()
 
+# class Button():
+#     def __init__(self, pos, text, size=[80,80]):
+#         self.pos = pos
+#         self.size = size
+#         self.text = text
+
+# buttonList = []
+
+# for i in range(len(keys)):
+#         for j, key in enumerate(keys[i]):
+#             if key == " ":
+#                 buttonList.append(Button([100*j+150, 100*i+250], key, [400,80]))
+#             else:
+#                 buttonList.append(Button([100*j+150, 100*i+250], key))
+
+# def drawAll(img, buttonList):
+#     for button in buttonList:
+#         x, y = button.pos
+#         w, h = button.size
+#         cvzone.cornerRect(img, (button.pos[0], button.pos[1], button.size[0],button.size[0]), 20 ,rt=0)
+#         cv2.rectangle(img, button.pos, (x+w, y+h), (0,0,0), cv2.FILLED)
+#         cv2.putText(img, button.text, (x+20, y+80), cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+#     return img
+
+# Modify the Button class to use a smaller default size
 class Button():
-    def __init__(self, pos, text, size=[80,80]):
+    def __init__(self, pos, text, size=[60, 60]):  # Reduced size from [80, 80] to [60, 60]
         self.pos = pos
         self.size = size
         self.text = text
 
 buttonList = []
 
+# Update button positions and spacing to fit the new size
 for i in range(len(keys)):
-        for j, key in enumerate(keys[i]):
-            buttonList.append(Button([100*j+150, 100*i+250], key))
+    for j, key in enumerate(keys[i]):
+        if key == " ":
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [300, 60]))  # Adjusted size and positions
+        else:
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key))  # Smaller size and spacing
 
 def drawAll(img, buttonList):
     for button in buttonList:
         x, y = button.pos
         w, h = button.size
-        cvzone.cornerRect(img, (button.pos[0], button.pos[1], button.size[0],button.size[0]), 20 ,rt=0)
-        cv2.rectangle(img, button.pos, (x+w, y+h), (0,0,0), cv2.FILLED)
-        cv2.putText(img, button.text, (x+20, y+80), cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+        cvzone.cornerRect(img, (x, y, w, h), 20, rt=0)
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 0), cv2.FILLED)
+        cv2.putText(img, button.text, (x + 15, y + 45), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 3)
     return img
+
 
 while True:
     success, img = cap.read()
