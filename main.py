@@ -1,120 +1,143 @@
 import cv2
 from cvzone.HandTrackingModule import HandDetector
-from time import sleep
+from time import sleep, time
 import numpy as np
 import cvzone
 from pynput.keyboard import Controller
+import os
+from datetime import datetime
 
-# Initialize video capture
+# Create a folder for saving files if it doesn't exist
+if not os.path.exists("typed_texts"):
+    os.makedirs("typed_texts")
+
+# initializing the video capture
 cap = cv2.VideoCapture(0)
-cap.set(3, 1280)  # Set width of video capture
-cap.set(4, 720)   # Set height of video capture
+cap.set(3, 1280)  # width of the video capture 
+cap.set(4, 720)   # height of the video capture
 
-# Initialize hand detector with higher confidence threshold for stability
-detector = HandDetector(detectionCon=0.8, maxHands=2)
+detector = HandDetector(detectionCon=.8, maxHands=2)
 
-# Define keyboard layout
-keys = [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-        ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-        ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
-        ["BACK", " ", "CLOSE"]]  # Added BACK and CLOSE options
-
+keys = [["Q","W","E","R","T","Y","U","I","O","P"],
+        ["A","S","D","F","G","H","J","K","L",";"],
+        ["Z","X","C","V","B","N","M",",",".","/"],
+        ["SAVE", " ", "CLEAR"]]  # Added SAVE and CLEAR buttons
 finalText = ""
+
 keyboard = Controller()
 
-# Time delay to prevent multiple clicks
-CLICK_DELAY = 0.3  # Increased delay to reduce multiple inputs
-last_click_time = 0
-
 class Button():
-    def __init__(self, pos, text, size=[65, 65]):  # Slightly larger buttons for better visibility
+    def __init__(self, pos, text, size=[60, 60]):
         self.pos = pos
         self.size = size
         self.text = text
 
-# Create button list with updated positions
 buttonList = []
-keyboard_x = 300  # Moved keyboard position to center
-keyboard_y = 150  # Moved keyboard higher on screen
 
+# Update button positions with new special buttons
 for i in range(len(keys)):
     for j, key in enumerate(keys[i]):
         if key == " ":
-            buttonList.append(Button([keyboard_x + 85 * j, keyboard_y + 85 * i], key, [200, 65]))
-        elif key in ["BACK", "CLOSE"]:
-            buttonList.append(Button([keyboard_x + 85 * j, keyboard_y + 85 * i], key, [100, 65]))
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [300, 60]))
+        elif key in ["SAVE", "CLEAR"]:
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [100, 60]))
         else:
-            buttonList.append(Button([keyboard_x + 85 * j, keyboard_y + 85 * i], key))
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key))
 
 def drawAll(img, buttonList):
-    # Add keyboard background with lighting effect
-    keyboard_bg = np.zeros((720, 1280, 3), np.uint8)
-    cv2.rectangle(keyboard_bg, (keyboard_x-50, keyboard_y-50), 
-                 (keyboard_x + 900, keyboard_y + 350), (30, 30, 50), cv2.FILLED)
-    img = cv2.addWeighted(img, 1, keyboard_bg, 0.3, 0)
-
     for button in buttonList:
         x, y = button.pos
         w, h = button.size
+        cvzone.cornerRect(img, (x, y, w, h), 20, rt=0)
         
-        # Add button lighting effect
-        cv2.rectangle(img, (x-2, y-2), (x + w + 2, y + h + 2), (255, 255, 255), 1)
-        cv2.rectangle(img, (x, y), (x + w, y + h), (50, 50, 50), cv2.FILLED)
+        # Different colors for special buttons
+        if button.text == "SAVE":
+            color = (0, 255, 0)  # Green for save
+        elif button.text == "CLEAR":
+            color = (0, 0, 255)  # Red for clear
+        else:
+            color = (0, 0, 0)    # Black for regular keys
+            
+        cv2.rectangle(img, (x, y), (x + w, y + h), color, cv2.FILLED)
         cv2.putText(img, button.text, (x + 15, y + 45), 
-                    cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 3)
+                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 3)
     return img
 
+def save_text_to_file(text):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"typed_texts/typed_text_{timestamp}.txt"
+    with open(filename, "w") as f:
+        f.write(text)
+    return filename
+
+# Initialize last click time for debouncing
+last_click_time = time()
+CLICK_DELAY = 0.3  # Increased delay to 0.3 seconds
+
 while True:
-    success, img = cap.read()
-    img = cv2.flip(img, 1)
-    hands, img = detector.findHands(img)
-    img = drawAll(img, buttonList)
+    try:
+        success, img = cap.read()
+        if not success:
+            print("Failed to capture frame")
+            continue
+            
+        img = cv2.flip(img, 1)
+        hands, img = detector.findHands(img)
+        img = drawAll(img, buttonList)
 
-    if hands:
-        hand1 = hands[0]
-        lmList1 = hand1["lmList"]
-        fingers1 = detector.fingersUp(hand1)  # Get fingers status
+        if hands:
+            hand1 = hands[0]
+            lmList1 = hand1["lmList"]
 
-        # Check for fist gesture (all fingers down)
-        if sum(fingers1) == 0:  # If all fingers are down (fist)
-            break  # Close the application
+            for button in buttonList:
+                x, y = button.pos
+                w, h = button.size
 
-        for button in buttonList:
-            x, y = button.pos
-            w, h = button.size
-
-            if x < lmList1[8][0] < x+w and y < lmList1[8][1] < y+h:
-                cv2.rectangle(img, button.pos, (x+w, y+h), (175,0,175), cv2.FILLED)
-                cv2.putText(img, button.text, (x+20,y+65), 
-                           cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 4)
-
-                l = detector.findDistance((lmList1[8][0], lmList1[8][1]), 
-                                       (lmList1[4][0], lmList1[4][1]), img)[0]
-
-                # Check if enough time has passed since last click
-                if l < 30 and (time.time() - last_click_time) > CLICK_DELAY:
-                    if button.text == "BACK":
-                        finalText = finalText[:-1]  # Remove last character
-                    elif button.text == "CLOSE":
-                        break
-                    else:
-                        keyboard.press(button.text)
-                        finalText += button.text
-                    
-                    last_click_time = time.time()  # Update last click time
-                    cv2.rectangle(img, button.pos, (x+w, y+h), (0,255,0), cv2.FILLED)
+                if x < lmList1[8][0] < x+w and y < lmList1[8][1] < y+h:
+                    cv2.rectangle(img, button.pos, (x+w, y+h), (175,0,175), cv2.FILLED)
                     cv2.putText(img, button.text, (x+20,y+65), 
                               cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 4)
 
-    # Draw text display area with background
-    cv2.rectangle(img, (150, 50), (1100, 150), (50, 50, 50), cv2.FILLED)
-    cv2.rectangle(img, (148, 48), (1102, 152), (255, 255, 255), 1)  # Border
-    cv2.putText(img, finalText, (160, 130), 
-                cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+                    # Check for pinch between any two fingers
+                    fingers = []
+                    # Check thumb with all fingers
+                    for id in [8, 12, 16, 20]:  # Index, middle, ring, pinky
+                        result = detector.findDistance((lmList1[4][0], lmList1[4][1]),
+                                                   (lmList1[id][0], lmList1[id][1]), img)
+                        if result[0] < 30:  # If distance is less than 30
+                            fingers.append(True)
+                        else:
+                            fingers.append(False)
 
-    cv2.imshow("Virtual Keyboard", img)
-    if cv2.waitKey(1) & 0xFF == 27:
-        break
+                    current_time = time()
+                    if any(fingers) and (current_time - last_click_time) > CLICK_DELAY:
+                        if button.text == "SAVE":
+                            if finalText:
+                                filename = save_text_to_file(finalText)
+                                print(f"Saved to {filename}")
+                                # Show save confirmation on screen
+                                cv2.putText(img, "Saved!", (500, 50), 
+                                          cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+                        elif button.text == "CLEAR":
+                            finalText = ""
+                        else:
+                            keyboard.press(button.text)
+                            finalText += button.text
+                            
+                        last_click_time = current_time
+                        sleep(0.3)  # Added delay after each action
+
+        cv2.rectangle(img, (150, 50), (1000, 150), (0,0,0), cv2.FILLED)
+        cv2.putText(img, finalText, (160, 130), 
+                    cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+
+        cv2.imshow("Image", img)
+        if cv2.waitKey(5) & 0xFF == 27:
+            break
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        continue
 
 cap.release()
 cv2.destroyAllWindows()
