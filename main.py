@@ -38,9 +38,11 @@ buttonList = []
 for i in range(len(keys)):
     for j, key in enumerate(keys[i]):
         if key == " ":
-            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [300, 60]))
-        elif key in ["SAVE", "CLEAR"]:
-            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [100, 60]))
+            buttonList.append(Button([80 * j + 200, 80 * i + 200], key, [300, 60]))
+        elif key == "SAVE":
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [150, 60]))
+        elif key == "CLEAR":
+            buttonList.append(Button([80 * j + 450, 80 * i + 200], key, [160, 60]))
         else:
             buttonList.append(Button([80 * j + 100, 80 * i + 200], key))
 
@@ -59,8 +61,7 @@ def drawAll(img, buttonList):
             color = (0, 0, 0)    # Black for regular keys
             
         cv2.rectangle(img, (x, y), (x + w, y + h), color, cv2.FILLED)
-        cv2.putText(img, button.text, (x + 15, y + 45), 
-                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 3)
+        cv2.putText(img, button.text, (x + 15, y + 45), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 3)
     return img
 
 def save_text_to_file(text):
@@ -95,15 +96,13 @@ while True:
 
                 if x < lmList1[8][0] < x+w and y < lmList1[8][1] < y+h:
                     cv2.rectangle(img, button.pos, (x+w, y+h), (175,0,175), cv2.FILLED)
-                    cv2.putText(img, button.text, (x+20,y+65), 
-                              cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 4)
+                    cv2.putText(img, button.text, (x+15,y+45), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 4)
 
                     # Check for pinch between any two fingers
                     fingers = []
                     # Check thumb with all fingers
                     for id in [8, 12, 16, 20]:  # Index, middle, ring, pinky
-                        result = detector.findDistance((lmList1[4][0], lmList1[4][1]),
-                                                   (lmList1[id][0], lmList1[id][1]), img)
+                        result = detector.findDistance((lmList1[4][0], lmList1[4][1]), (lmList1[id][0], lmList1[id][1]), img)
                         if result[0] < 30:  # If distance is less than 30
                             fingers.append(True)
                         else:
@@ -116,8 +115,7 @@ while True:
                                 filename = save_text_to_file(finalText)
                                 print(f"Saved to {filename}")
                                 # Show save confirmation on screen
-                                cv2.putText(img, "Saved!", (500, 50), 
-                                          cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+                                cv2.putText(img, "Saved!", (500, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
                         elif button.text == "CLEAR":
                             finalText = ""
                         else:
@@ -128,8 +126,7 @@ while True:
                         sleep(0.3)  # Added delay after each action
 
         cv2.rectangle(img, (150, 50), (1000, 150), (0,0,0), cv2.FILLED)
-        cv2.putText(img, finalText, (160, 130), 
-                    cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+        cv2.putText(img, finalText, (160, 130), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 5)
 
         cv2.imshow("Image", img)
         if cv2.waitKey(5) & 0xFF == 27:
