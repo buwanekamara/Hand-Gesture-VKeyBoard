@@ -16,12 +16,13 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 1280)  # width of the video capture 
 cap.set(4, 720)   # height of the video capture
 
-detector = HandDetector(detectionCon=.8, maxHands=2)
+# Increased detection confidence for better sensitivity
+detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 keys = [["Q","W","E","R","T","Y","U","I","O","P"],
         ["A","S","D","F","G","H","J","K","L",";"],
         ["Z","X","C","V","B","N","M",",",".","/"],
-        ["SAVE", " ", "CLEAR"]]  # Added SAVE and CLEAR buttons
+        ["SAVE", " ", "CLEAR"]]
 finalText = ""
 
 keyboard = Controller()
@@ -70,9 +71,31 @@ def save_text_to_file(text):
         f.write(text)
     return filename
 
+def check_fist(hand_landmarks):
+    # Check if all fingers are closed (fist gesture)
+    fingers = detector.fingersUp(hand_landmarks)
+    return sum(fingers) == 0  # Returns True if all fingers are down (fist)
+
+def check_pinch(lmList):
+    # Check for pinch between any two fingers with increased sensitivity
+    pinch_detected = False
+    # Check combinations of finger tips (landmarks 4,8,12,16,20)
+    finger_tips = [4, 8, 12, 16, 20]
+    
+    for i in range(len(finger_tips)):
+        for j in range(i + 1, len(finger_tips)):
+            dist = detector.findDistance(
+                (lmList[finger_tips[i]][0], lmList[finger_tips[i]][1]),
+                (lmList[finger_tips[j]][0], lmList[finger_tips[j]][1])
+            )[0]
+            if dist < 40:  # Increased sensitivity (was 30)
+                pinch_detected = True
+                break
+    return pinch_detected
+
 # Initialize last click time for debouncing
 last_click_time = time()
-CLICK_DELAY = 0.3  # Increased delay to 0.3 seconds
+CLICK_DELAY = 0.3  # Delay between clicks
 
 while True:
     try:
@@ -89,6 +112,19 @@ while True:
             hand1 = hands[0]
             lmList1 = hand1["lmList"]
 
+            # Check for fist gesture
+            if check_fist(hand1):
+                # Save current text before closing
+                if finalText:
+                    filename = save_text_to_file(finalText)
+                    print(f"Final text saved to {filename}")
+                # Display closing message
+                cv2.putText(img, "Closing Program...", (400, 50), 
+                           cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 255), 3)
+                cv2.imshow("Image", img)
+                cv2.waitKey(1000)  # Show message for 1 second
+                break
+
             for button in buttonList:
                 x, y = button.pos
                 w, h = button.size
@@ -98,24 +134,13 @@ while True:
                     cv2.putText(img, button.text, (x+20,y+65), 
                               cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 4)
 
-                    # Check for pinch between any two fingers
-                    fingers = []
-                    # Check thumb with all fingers
-                    for id in [8, 12, 16, 20]:  # Index, middle, ring, pinky
-                        result = detector.findDistance((lmList1[4][0], lmList1[4][1]),
-                                                   (lmList1[id][0], lmList1[id][1]), img)
-                        if result[0] < 30:  # If distance is less than 30
-                            fingers.append(True)
-                        else:
-                            fingers.append(False)
-
+                    # Check for pinch with increased sensitivity
                     current_time = time()
-                    if any(fingers) and (current_time - last_click_time) > CLICK_DELAY:
+                    if check_pinch(lmList1) and (current_time - last_click_time) > CLICK_DELAY:
                         if button.text == "SAVE":
                             if finalText:
                                 filename = save_text_to_file(finalText)
                                 print(f"Saved to {filename}")
-                                # Show save confirmation on screen
                                 cv2.putText(img, "Saved!", (500, 50), 
                                           cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
                         elif button.text == "CLEAR":
@@ -125,14 +150,22 @@ while True:
                             finalText += button.text
                             
                         last_click_time = current_time
-                        sleep(0.3)  # Added delay after each action
+                        sleep(0.3)  # Consistent delay after each action
 
+        # Display text input area
         cv2.rectangle(img, (150, 50), (1000, 150), (0,0,0), cv2.FILLED)
         cv2.putText(img, finalText, (160, 130), 
                     cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
 
+        # Display instructions
+        cv2.putText(img, "Make a fist to close", (50, 680), 
+                    cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
+
         cv2.imshow("Image", img)
         if cv2.waitKey(5) & 0xFF == 27:
+            if finalText:
+                filename = save_text_to_file(finalText)
+                print(f"Final text saved to {filename}")
             break
 
     except Exception as e:

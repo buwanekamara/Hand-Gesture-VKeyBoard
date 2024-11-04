@@ -8,6 +8,19 @@ This project was developed through the collaborative efforts of:
 - **Jaival** - Initial development with limited features 
 - **Deep** - Added some more features to the keyboard, improved UI and Improved Code readability. 
 
+## Demo Video 🎬
+
+Check out a **Demo Video** highlighting the Gesture-Based Virtual Keyboard's main features, including gesture-controlled typing, saving it into a file, and more. Click below to see it in action:
+
+[View Sample Video on Google Drive](https://drive.google.com/file/d/1v9FX2rnnHbVqyEBxDGPhTTAtZYOg9EXo/view)
+
+Alternatively, you can download and view the video offline using the link above.
+
+<video width="600" controls autoplay loop>
+  <source src="https://drive.google.com/file/d/1v9FX2rnnHbVqyEBxDGPhTTAtZYOg9EXo/view" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## Features
 - ✋ Hand gesture-controlled virtual keyboard
 - 👆 Pinch-to-type functionality
