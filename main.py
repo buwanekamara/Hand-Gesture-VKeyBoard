@@ -39,9 +39,11 @@ buttonList = []
 for i in range(len(keys)):
     for j, key in enumerate(keys[i]):
         if key == " ":
-            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [300, 60]))
-        elif key in ["SAVE", "CLEAR"]:
-            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [100, 60]))
+            buttonList.append(Button([80 * j + 200, 80 * i + 200], key, [300, 60]))
+        elif key == "SAVE":
+            buttonList.append(Button([80 * j + 100, 80 * i + 200], key, [150, 60]))
+        elif key == "CLEAR":
+            buttonList.append(Button([80 * j + 450, 80 * i + 200], key, [160, 60]))
         else:
             buttonList.append(Button([80 * j + 100, 80 * i + 200], key))
 
@@ -60,8 +62,7 @@ def drawAll(img, buttonList):
             color = (0, 0, 0)    # Black for regular keys
             
         cv2.rectangle(img, (x, y), (x + w, y + h), color, cv2.FILLED)
-        cv2.putText(img, button.text, (x + 15, y + 45), 
-                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 3)
+        cv2.putText(img, button.text, (x + 15, y + 45), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 3)
     return img
 
 def save_text_to_file(text):
@@ -131,8 +132,7 @@ while True:
 
                 if x < lmList1[8][0] < x+w and y < lmList1[8][1] < y+h:
                     cv2.rectangle(img, button.pos, (x+w, y+h), (175,0,175), cv2.FILLED)
-                    cv2.putText(img, button.text, (x+20,y+65), 
-                              cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 4)
+                    cv2.putText(img, button.text, (x+15,y+45), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 4)
 
                     # Check for pinch with increased sensitivity
                     current_time = time()
