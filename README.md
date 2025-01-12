@@ -2,16 +2,6 @@
 
 This project enables a touch-free virtual keyboard controlled using hand gestures captured via webcam. Users can type using simple gestures, such as pinching their fingers, making it a futuristic and hygienic typing solution.
 
-Check out a **Demo Video** highlighting the Gesture-Based Virtual Keyboard's main features, including gesture-controlled typing, saving it into a file, and more. Click below to see it in action:
-
-[View Sample Video on Google Drive]()
-
-Alternatively, you can download and view the video offline using the link above.
-
-<video width="600" controls autoplay loop>
-  <source src="" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
 
 ## Features
 ✋ Hand Gesture Control: Use hand gestures to interact with a virtual keyboard displayed on your screen.
