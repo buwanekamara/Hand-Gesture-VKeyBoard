@@ -5,8 +5,11 @@ This project enables a touch-free virtual keyboard controlled using hand gesture
 
 ## Features
 ✋ Hand Gesture Control: Use hand gestures to interact with a virtual keyboard displayed on your screen.
+
 👆 Pinch-to-Type: Perform a pinch gesture (index finger and thumb) to "press" virtual keys.
+
 ⌫ Backspace & Controls: Delete typed text or exit the keyboard with on-screen buttons or specific gestures.
+
 📝 Real-Time Text Display: See the text you type appear on the screen in real time.
 
 
